@@ -32,7 +32,7 @@ static const unsigned max_num_devices = 32;
  * Pages that compress to size greater than this are stored
  * uncompressed in memory.
  */
-static const size_t max_zpage_size = PAGE_SIZE / 4 * 3;
+static const size_t max_zpage_size = PAGE_SIZE / 10 * 9;
 
 /*
  * NOTE: max_zpage_size must be less than or equal to:
@@ -98,26 +98,40 @@ struct zram_meta {
 	struct zs_pool *mem_pool;
 };
 
+struct zram_slot_free {
+	unsigned long index;
+	struct zram_slot_free *next;
+};
+
 struct zram {
 	struct zram_meta *meta;
+	struct rw_semaphore lock; /* protect compression buffers, table,
+				   * 32bit stat counters against concurrent
+				   * notifications, reads and writes */
+
+	struct work_struct free_work;  /* handle pending free request */
+	struct zram_slot_free *slot_free_rq; /* list head of free request */
+	struct zcomp *comp;
 	struct request_queue *queue;
 	struct gendisk *disk;
-	struct zcomp *comp;
-
-	/* Prevent concurrent execution of device init, reset and R/W request */
+	/* Prevent concurrent execution of device init */
 	struct rw_semaphore init_lock;
+	/*
+	 * the number of pages zram can consume for storing compressed data
+	 */
+	spinlock_t slot_free_lock;
+	unsigned long limit_pages;
+	int max_comp_streams;
+
+	struct zram_stats stats;
+	atomic_t refcount; /* refcount for zram_meta */
+	/* wait all IO under all of cpu are done */
+	wait_queue_head_t io_done;
 	/*
 	 * This is the limit on amount of *uncompressed* worth of data
 	 * we can store in a disk.
 	 */
 	u64 disksize;	/* bytes */
-	int max_comp_streams;
-	struct zram_stats stats;
-	/*
-	 * the number of pages zram can consume for storing compressed data
-	 */
-	unsigned long limit_pages;
-
 	char compressor[10];
 };
 #endif
