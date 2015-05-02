@@ -124,7 +124,7 @@ bool afe_close_done[2] = {true, true};
 
 static int afe_get_cal_hw_delay(int32_t path,
 				struct audio_cal_hw_delay_entry *entry);
-static void remap_cal_data(struct cal_block_data *cal_block, int cal_index);
+static int remap_cal_data(struct cal_block_data *cal_block, int cal_index);
 
 void afe_set_aanc_info(struct aanc_data *q6_aanc_info)
 {
@@ -1060,7 +1060,7 @@ done:
 
 }
 
-static void remap_cal_data(struct cal_block_data *cal_block, int cal_index)
+static int remap_cal_data(struct cal_block_data *cal_block, int cal_index)
 {
 	int ret = 0;
 
@@ -1091,7 +1091,7 @@ static void remap_cal_data(struct cal_block_data *cal_block, int cal_index)
 			mem_map_cal_handles[cal_index]);
 	}
 done:
-	return;
+	return  ret;
 }
 
 static void send_afe_cal_type(int cal_index, int port_id)
@@ -1115,7 +1115,12 @@ static void send_afe_cal_type(int cal_index, int port_id)
 
 	pr_debug("%s: Sending cal_index cal %d\n", __func__, cal_index);
 
-	remap_cal_data(cal_block, cal_index);
+	ret = remap_cal_data(cal_block, cal_index);
+	if (ret) {
+		pr_err("%s: Remap_cal_data failed for cal %d!\n",
+			__func__, cal_index);
+		goto unlock;
+	}
 	ret = afe_send_cal_block(port_id, cal_block);
 	if (ret < 0)
 		pr_debug("%s: No cal sent for cal_index %d, port_id = 0x%x! ret %d\n",
