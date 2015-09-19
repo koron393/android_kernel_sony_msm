@@ -4,6 +4,7 @@
 
 #include "internals.h"
 
+#ifdef CONFIG_GENERIC_PENDING_IRQ
 void irq_move_masked_irq(struct irq_data *idata)
 {
 	struct irq_desc *desc = irq_data_to_desc(idata);
@@ -70,3 +71,4 @@ void irq_move_irq(struct irq_data *idata)
 	if (!masked)
 		idata->chip->irq_unmask(idata);
 }
+#endif
