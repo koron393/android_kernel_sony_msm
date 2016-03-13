@@ -20,6 +20,11 @@
 /* physical offset of RAM */
 #define PLAT_PHYS_OFFSET UL(CONFIG_PHYS_OFFSET)
 
+#if defined(CONFIG_KEXEC_HARDBOOT)
+/* sony shinano devices */
+#define KEXEC_HB_PAGE_ADDR     UL(0x3eae0000)
+#endif
+
 #ifndef __ASSEMBLY__
 int msm_get_memory_type_from_name(const char *memtype_name);
 

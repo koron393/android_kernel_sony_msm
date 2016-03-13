@@ -1023,7 +1023,8 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
 
 		if (flags & KEXEC_PRESERVE_CONTEXT)
 			image->preserve_context = 1;
-#ifdef CONFIG_KEXEC_HARDBOOT_64
+
+#if defined (CONFIG_KEXEC_HARDBOOT) || defined(CONFIG_KEXEC_HARDBOOT_64)
 		if (flags & KEXEC_HARDBOOT)
 			image->hardboot = 1;
 #endif
