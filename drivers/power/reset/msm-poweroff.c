@@ -33,7 +33,7 @@
 #include <soc/qcom/restart.h>
 #include <soc/qcom/watchdog.h>
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 #include <asm/kexec.h>
 #endif
 
@@ -482,7 +482,7 @@ static struct platform_driver msm_restart_driver = {
 	},
 };
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 static void msm_kexec_hardboot_hook(void)
 {
 	qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
@@ -491,7 +491,7 @@ static void msm_kexec_hardboot_hook(void)
 
 static int __init msm_restart_init(void)
 {
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 	kexec_hardboot_hook = msm_kexec_hardboot_hook;
 #endif
 	return platform_driver_register(&msm_restart_driver);

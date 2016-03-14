@@ -28,7 +28,7 @@
 
 #define KEXEC_ARCH KEXEC_ARCH_ARM64
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 #define KEXEC_HB_PAGE_MAGIC 0x4a5db007
 // Hardboot: for Nexus 6P (Angler). Address reserved in device tree.
 #define KEXEC_HB_PAGE_ADDR UL(0x1fd00000)
@@ -49,7 +49,7 @@ static inline void crash_setup_regs(struct pt_regs *newregs,
 	/* Empty routine needed to avoid build errors. */
 }
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 extern void (*kexec_hardboot_hook)(void);
 #endif
 

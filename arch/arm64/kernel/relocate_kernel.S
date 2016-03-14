@@ -19,7 +19,7 @@
 #define IND_DONE_BIT		2
 #define IND_SOURCE_BIT		3
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 // MSM8994 specific
 #define MPM2_MPM_PS_HOLD	0xFC4AB000
 #endif
@@ -136,7 +136,7 @@ second_not_hardboot:
 	dsb	sy
 	isb
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 	ldr	x0, arm64_kexec_hardboot
 	cbnz	x0, hardboot
 #endif
@@ -155,7 +155,7 @@ second_not_hardboot:
 	mov	x3, xzr
 	br	x4
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 hardboot:
 	/* Stash boot arguments in hardboot page:
 	 * 0: KEXEC_HB_PAGE_MAGIC

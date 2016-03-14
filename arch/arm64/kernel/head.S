@@ -35,7 +35,7 @@
 #include <asm/page.h>
 #include <asm/virt.h>
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 #include <asm/kexec.h>
 #endif
 
@@ -239,7 +239,7 @@ section_table:
 #endif
 
 ENTRY(stext)
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 	/* Check hardboot page for a kexec kernel */
 	ldr	x21, =KEXEC_HB_PAGE_ADDR
 	ldr	x22, [x21]

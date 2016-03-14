@@ -718,7 +718,7 @@ config KEXEC
 	  but it is independent of the system firmware.   And like a reboot
 	  you can start any kernel with it, not just Linux.
 
-config KEXEC_HARDBOOT
+config KEXEC_HARDBOOT_64
 	bool "Support hard booting to a kexec kernel"
 	depends on KEXEC
 	help
