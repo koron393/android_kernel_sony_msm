@@ -27,7 +27,7 @@ extern const unsigned long relocate_new_kernel_size;
 extern unsigned long arm64_kexec_dtb_addr;
 extern unsigned long arm64_kexec_kimage_head;
 extern unsigned long arm64_kexec_kimage_start;
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 extern unsigned long arm64_kexec_hardboot;
 void (*kexec_hardboot_hook)(void);
 #endif
@@ -181,7 +181,7 @@ int machine_kexec_prepare(struct kimage *image)
 		arm64_kexec_kimage_start = image->start;
 		arm64_kexec_dtb_addr = 0;
 	}
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 	arm64_kexec_hardboot = image->hardboot;
 #endif
 	// debug; please remove
@@ -328,7 +328,7 @@ void machine_kexec(struct kimage *image)
 	/* Flush the reboot_code_buffer in preparation for its execution. */
 	__flush_dcache_area(reboot_code_buffer, relocate_new_kernel_size);
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 	if (image->hardboot) {
 		// hardboot reserve should be 1MB.
 		unsigned long hardboot_reserve = KEXEC_HB_PAGE_ADDR;
@@ -368,7 +368,7 @@ void machine_kexec(struct kimage *image)
 	/* Flush the kimage list. */
 	kexec_list_flush(image->head);
 
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 	/* Run any final machine-specific shutdown code. */
 	if (image->hardboot && kexec_hardboot_hook)
 		kexec_hardboot_hook();

@@ -736,7 +736,7 @@ static struct page *kimage_alloc_page(struct kimage *image,
 		}
 
 		addr = page_to_pfn(page) << PAGE_SHIFT;
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 		/* FIXME: Stupid stupid stupid hack: if page falls
 		 * in hardboot area, file it away.
 		 * This is to avoid reserving 64MB of RAM
@@ -1023,7 +1023,7 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
 
 		if (flags & KEXEC_PRESERVE_CONTEXT)
 			image->preserve_context = 1;
-#ifdef CONFIG_KEXEC_HARDBOOT
+#ifdef CONFIG_KEXEC_HARDBOOT_64
 		if (flags & KEXEC_HARDBOOT)
 			image->hardboot = 1;
 #endif
