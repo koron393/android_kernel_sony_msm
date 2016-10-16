@@ -83,6 +83,80 @@ static int vco_set_rate_hpm(struct clk *c, unsigned long rate)
 	return rc;
 }
 
+#ifdef CONFIG_ARCH_MSM8974
+static int dsi_pll_enable_seq_8974(struct mdss_pll_resources *dsi_pll_res)
+{
+	int i, rc = 0;
+	int pll_locked;
+
+	dsi_pll_software_reset(dsi_pll_res);
+
+	/*
+	 * PLL power up sequence.
+	 * Add necessary delays recommeded by hardware.
+	 */
+	MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x01);
+	udelay(1);
+	MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x05);
+	udelay(200);
+	MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x07);
+	udelay(500);
+	MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x0f);
+	udelay(500);
+
+	for (i = 0; i < 2; i++) {
+		udelay(100);
+		/* DSI Uniphy lock detect setting */
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+				DSI_PHY_PLL_UNIPHY_PLL_LKDET_CFG2, 0x0c);
+		udelay(100);
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+				DSI_PHY_PLL_UNIPHY_PLL_LKDET_CFG2, 0x0d);
+
+		pll_locked = dsi_pll_lock_status(dsi_pll_res);
+		if (pll_locked)
+			break;
+
+		dsi_pll_software_reset(dsi_pll_res);
+		/*
+		 * PLL power up sequence.
+		 * Add necessary delays recommeded by hardware.
+		 */
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x1);
+		udelay(1);
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x5);
+		udelay(200);
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x7);
+		udelay(250);
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x5);
+		udelay(200);
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0x7);
+		udelay(500);
+		MDSS_PLL_REG_W(dsi_pll_res->pll_base,
+					DSI_PHY_PLL_UNIPHY_PLL_GLB_CFG, 0xf);
+		udelay(500);
+
+	}
+
+	if (!pll_locked) {
+		pr_err("DSI PLL lock failed\n");
+		rc = -EINVAL;
+	} else {
+		pr_debug("DSI PLL Lock success\n");
+	}
+
+	return rc;
+}
+#else
 static int dsi_pll_enable_seq(struct mdss_pll_resources *dsi_pll_res)
 {
 	int rc = 0;
@@ -129,6 +203,7 @@ static int dsi_pll_enable_seq(struct mdss_pll_resources *dsi_pll_res)
 
 	return rc;
 }
+#endif
 
 /* Op structures - common for both DSI PLL0 and DSI PLL1 */
 static struct clk_ops clk_ops_dsi_vco = {
@@ -159,6 +234,106 @@ static struct clk_mux_ops byte_mux_ops = {
 	.get_mux_sel = get_byte_mux_sel,
 };
 
+#ifdef CONFIG_ARCH_MSM8974
+static struct dsi_pll_vco_clk dsi_vco_clk_8974 = {
+	.ref_clk_rate = 19200000,
+	.min_rate = 350000000,
+	.max_rate = 750000000,
+	.pll_en_seq_cnt = 3,
+	.pll_enable_seqs[0] = dsi_pll_enable_seq_8974,
+	.pll_enable_seqs[1] = dsi_pll_enable_seq_8974,
+	.pll_enable_seqs[2] = dsi_pll_enable_seq_8974,
+	.lpfr_lut_size = 10,
+	.lpfr_lut = lpfr_lut_struct,
+	.c = {
+		.dbg_name = "dsi_vco_clk_8974",
+		.ops = &clk_ops_dsi_vco,
+		CLK_INIT(dsi_vco_clk_8974.c),
+	},
+};
+
+static struct div_clk analog_postdiv_clk_8974 = {
+	.data = {
+		.max_div = 255,
+		.min_div = 1,
+	},
+	.ops = &analog_postdiv_ops,
+	.c = {
+		.parent = &dsi_vco_clk_8974.c,
+		.dbg_name = "analog_postdiv_clk",
+		.ops = &analog_postdiv_clk_ops,
+		.flags = CLKFLAG_NO_RATE_CACHE,
+		CLK_INIT(analog_postdiv_clk_8974.c),
+	},
+};
+
+static struct div_clk indirect_path_div2_clk_8974 = {
+	.ops = &fixed_2div_ops,
+	.data = {
+		.div = 2,
+		.min_div = 2,
+		.max_div = 2,
+	},
+	.c = {
+		.parent = &analog_postdiv_clk_8974.c,
+		.dbg_name = "indirect_path_div2_clk",
+		.ops = &clk_ops_div,
+		.flags = CLKFLAG_NO_RATE_CACHE,
+		CLK_INIT(indirect_path_div2_clk_8974.c),
+	},
+};
+
+static struct div_clk pixel_clk_src_8974 = {
+	.data = {
+		.max_div = 255,
+		.min_div = 1,
+	},
+	.ops = &digital_postdiv_ops,
+	.c = {
+		.parent = &dsi_vco_clk_8974.c,
+		.dbg_name = "pixel_clk_src_8974",
+		.ops = &pixel_clk_src_ops,
+		.flags = CLKFLAG_NO_RATE_CACHE,
+		CLK_INIT(pixel_clk_src_8974.c),
+	},
+};
+
+static struct mux_clk byte_mux_8974 = {
+	.num_parents = 2,
+	.parents = (struct clk_src[]){
+		{&dsi_vco_clk_8974.c, 0},
+		{&indirect_path_div2_clk_8974.c, 1},
+	},
+	.ops = &byte_mux_ops,
+	.c = {
+		.parent = &dsi_vco_clk_8974.c,
+		.dbg_name = "byte_mux_8974",
+		.ops = &byte_mux_clk_ops,
+		CLK_INIT(byte_mux_8974.c),
+	},
+};
+
+static struct div_clk byte_clk_src_8974 = {
+	.ops = &fixed_4div_ops,
+	.data = {
+		.min_div = 4,
+		.max_div = 4,
+	},
+	.c = {
+		.parent = &byte_mux_8974.c,
+		.dbg_name = "byte_clk_src_8974",
+		.ops = &byte_clk_src_ops,
+		CLK_INIT(byte_clk_src_8974.c),
+	},
+};
+
+static struct clk_lookup mdss_dsi_pllcc_8974[] = {
+	CLK_LOOKUP_OF("pixel_src", pixel_clk_src_8974,
+						"fd8c0000.qcom,mmsscc-mdss"),
+	CLK_LOOKUP_OF("byte_src", byte_clk_src_8974,
+						"fd8c0000.qcom,mmsscc-mdss"),
+};
+#else
 /* DSI PLL0 clock structures */
 static struct dsi_pll_vco_clk dsi_pll0_vco_clk = {
 	.ref_clk_rate = 19200000,
@@ -350,6 +525,7 @@ static struct clk_lookup dsi_pll1_cc[] = {
 	CLK_LIST(dsi_pll1_pixel_clk_src),
 	CLK_LIST(dsi_pll1_byte_clk_src),
 };
+#endif
 
 int dsi_pll_clock_register_hpm(struct platform_device *pdev,
 				struct mdss_pll_resources *pll_res)
@@ -366,6 +542,15 @@ int dsi_pll_clock_register_hpm(struct platform_device *pdev,
 		return -EPROBE_DEFER;
 	}
 
+#ifdef CONFIG_ARCH_MSM8974
+	/* Set client data to mux, div and vco clocks */
+	byte_clk_src_8974.priv = pll_res;
+	pixel_clk_src_8974.priv = pll_res;
+	byte_mux_8974.priv = pll_res;
+	indirect_path_div2_clk_8974.priv = pll_res;
+	analog_postdiv_clk_8974.priv = pll_res;
+	dsi_vco_clk_8974.priv = pll_res;
+#else
 	/*
 	 * Set client data to mux, div and vco clocks
 	 * This needs to be done for PLL0 and PLL1 separately
@@ -386,6 +571,7 @@ int dsi_pll_clock_register_hpm(struct platform_device *pdev,
 		dsi_pll1_analog_postdiv_clk.priv = pll_res;
 		dsi_pll1_vco_clk.priv = pll_res;
 	}
+#endif
 	pll_res->vco_delay = VCO_DELAY_USEC;
 
 	/* Set clock source operations */
@@ -403,12 +589,17 @@ int dsi_pll_clock_register_hpm(struct platform_device *pdev,
 
 	if ((pll_res->target_id == MDSS_PLL_TARGET_8974) ||
 	    (pll_res->target_id == MDSS_PLL_TARGET_8976)) {
+#ifdef CONFIG_ARCH_MSM8974
+		rc = of_msm_clock_register(pdev->dev.of_node,
+			mdss_dsi_pllcc_8974, ARRAY_SIZE(mdss_dsi_pllcc_8974));
+#else
 		if (!pll_res->index)
 			rc = of_msm_clock_register(pdev->dev.of_node,
 				dsi_pll0_cc, ARRAY_SIZE(dsi_pll0_cc));
 		else
 			rc = of_msm_clock_register(pdev->dev.of_node,
 				dsi_pll1_cc, ARRAY_SIZE(dsi_pll1_cc));
+#endif
 		if (rc) {
 			pr_err("Clock register failed\n");
 			rc = -EPROBE_DEFER;
@@ -419,8 +610,11 @@ int dsi_pll_clock_register_hpm(struct platform_device *pdev,
 	}
 
 	if (!rc)
+#ifdef CONFIG_ARCH_MSM8974
+		pr_info("Registered DSI PLL clocks successfully\n");
+#else
 		pr_info("Registered DSI PLL:%d clocks successfully\n",
 			pll_res->index);
-
+#endif
 	return rc;
 }
