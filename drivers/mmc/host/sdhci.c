@@ -1332,7 +1332,7 @@ static u16 sdhci_get_preset_value(struct sdhci_host *host)
 		preset = sdhci_readw(host, SDHCI_PRESET_FOR_SDR104);
 		break;
 	case SDHCI_CTRL_UHS_DDR50:
-		preset = sdhci_readw(host, SDHCI_PRESET_FOR_DDR50);
+		preset = sdhci_readw(host, SDHCI_PRESET_FOR_SDR25);
 		break;
 	default:
 		pr_warn("%s: Invalid UHS-I mode selected\n",
@@ -2226,7 +2226,7 @@ static void sdhci_do_set_ios(struct sdhci_host *host, struct mmc_ios *ios)
 			else if (ios->timing == MMC_TIMING_UHS_SDR104)
 				ctrl_2 |= SDHCI_CTRL_UHS_SDR104;
 			else if (ios->timing == MMC_TIMING_UHS_DDR50)
-				ctrl_2 |= SDHCI_CTRL_UHS_DDR50;
+				ctrl_2 |= SDHCI_CTRL_UHS_SDR25;
 			sdhci_writew(host, ctrl_2, SDHCI_HOST_CONTROL2);
 		}
 
