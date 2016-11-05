@@ -11,11 +11,11 @@
 
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
+#include <linux/err.h>
 #include <linux/module.h>
+#include <linux/of.h>
 #include <linux/slab.h>
 #include <linux/sort.h>
-#include <linux/err.h>
-#include <linux/of.h>
 #include <linux/sched.h>
 #include <asm/cputime.h>
 
