@@ -177,7 +177,7 @@ struct region_info region_configs[] = {
    static struct ct current_ct;
 
 /* Band selection */
-static unsigned char default_radio_region;    /* US */
+static unsigned char default_radio_region = 2;  /* Japan */
 module_param(default_radio_region, byte, 0);
 MODULE_PARM_DESC(default_radio_region, "Region: 0=US, 1=Europe, 2=Japan");
 
