@@ -39,7 +39,7 @@
 *******************************************************************************/
 
 /* Set default World region */
-#define DEF_V4L2_FM_WORLD_REGION FM_REGION_NA
+#define DEF_V4L2_FM_WORLD_REGION FM_REGION_JP
 
 /* Set default Audio mode */
 #define DEF_V4L2_FM_AUDIO_MODE FM_AUTO_MODE
