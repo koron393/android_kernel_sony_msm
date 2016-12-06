@@ -45,11 +45,8 @@
 #define DEF_V4L2_FM_AUDIO_MODE FM_AUTO_MODE
 
 /* Set default Audio path */
-#if defined (CONFIG_MACH_SONY_SHINANO) || defined (CONFIG_ARCH_SONY_KITAKAMI)
+/* When enable FM over PCM, audio path should be I2S*/
 #define DEF_V4L2_FM_AUDIO_PATH FM_AUDIO_I2S
-#else
-#define DEF_V4L2_FM_AUDIO_PATH FM_AUDIO_DAC
-#endif
 
 /*Make this TRUE if FM I2S audio to be routed over */
 /*PCM lines in master mode */
@@ -70,11 +67,6 @@
 /*Never make both the above macros TRUE*/
 #if (ROUTE_FM_I2S_SLAVE_TO_PCM_PINS) && (ROUTE_FM_I2S_MASTER_TO_PCM_PINS)
 #error "I2S should be either master or slave"
-#endif
-
-/*Whenw e enable FM over PCM, audio path should be I2S*/
-#if (ROUTE_FM_I2S_SLAVE_TO_PCM_PINS) || (ROUTE_FM_I2S_MASTER_TO_PCM_PINS)
-#define DEF_V4L2_FM_AUDIO_PATH FM_AUDIO_I2S
 #endif
 
 /* FM driver debug flag. Set this to FALSE for Production release */
