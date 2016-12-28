@@ -67,6 +67,10 @@
 #include <linux/platform_data/msm_serial_hs.h>
 #include <linux/msm-bus.h>
 
+#ifdef CONFIG_BT_MSM_SLEEP
+#include <net/bluetooth/bluesleep.h>
+#endif
+
 #include "msm_serial_hs_hwreg.h"
 #define UART_SPS_CONS_PERIPHERAL 0
 #define UART_SPS_PROD_PERIPHERAL 1
@@ -308,10 +312,16 @@ static int msm_hs_ioctl(struct uart_port *uport, unsigned int cmd,
 	switch (cmd) {
 	case MSM_ENABLE_UART_CLOCK: {
 		ret = msm_hs_request_clock_on(&msm_uport->uport);
+#ifdef CONFIG_BT_MSM_SLEEP
+		bluesleep_outgoing_data();
+#endif
 		break;
 	}
 	case MSM_DISABLE_UART_CLOCK: {
 		ret = msm_hs_request_clock_off(&msm_uport->uport);
+#ifdef CONFIG_BT_MSM_SLEEP
+		bluesleep_tx_allow_sleep();
+#endif
 		break;
 	}
 	case MSM_GET_UART_CLOCK_STATUS: {
@@ -2723,6 +2733,10 @@ static int msm_hs_startup(struct uart_port *uport)
 
 	spin_unlock_irqrestore(&uport->lock, flags);
 
+#ifdef CONFIG_BT_MSM_SLEEP
+	bluesleep_start(1);
+#endif
+
 	msm_hs_resource_unvote(msm_uport);
 	return 0;
 
@@ -3643,6 +3657,10 @@ static void msm_hs_shutdown(struct uart_port *uport)
 		disable_irq(msm_uport->wakeup.irq);
 	else
 		disable_irq(uport->irq);
+
+#ifdef CONFIG_BT_MSM_SLEEP
+	bluesleep_stop();
+#endif
 
 	spin_lock_irqsave(&uport->lock, flags);
 	msm_uport->wakeup.enabled = false;
