@@ -724,7 +724,11 @@ static inline bool mmc_enable_qca9377_settings(const struct mmc_card *c)
 
 static inline bool mmc_card_support_auto_bkops(const struct mmc_card *c)
 {
+#ifdef CONFIG_MACH_SONY_SHINANO
+	return false;
+#else
 	return c->ext_csd.rev >= 7;
+#endif
 }
 
 static inline bool mmc_card_configured_manual_bkops(const struct mmc_card *c)
